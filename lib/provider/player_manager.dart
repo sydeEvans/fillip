@@ -14,7 +14,7 @@ class PlayerManager extends ChangeNotifier {
     buffered: Duration.zero,
     total: Duration.zero,
   );
-  RepeatState repeatState = RepeatState.off;
+  RepeatState repeatState = RepeatState.repeatPlaylist;
 
   var isFirstSong = true;
   var isLastSong = true;
@@ -22,7 +22,7 @@ class PlayerManager extends ChangeNotifier {
   ButtonState playButtonState = ButtonState.paused;
 
   late final AudioPlayer _audioPlayer;
-  late final ConcatenatingAudioSource _playlist;
+  late ConcatenatingAudioSource _playlist;
 
   late final MusicClient musicClient;
 
@@ -91,7 +91,6 @@ class PlayerManager extends ChangeNotifier {
       );
 
       notifyListeners();
-
     });
   }
 
@@ -197,5 +196,17 @@ class PlayerManager extends ChangeNotifier {
     final index = _playlist.length - 1;
     if (index < 0) return;
     _playlist.removeAt(index);
+  }
+
+  void replacePlaylist({ key = String }) async {
+    var resp = await musicClient.searchMusic(key);
+
+
+    var list = resp.map((e) {
+      return AudioSource.uri(Uri.parse(e.url), tag: e.basename);
+    }).toList();
+
+    _playlist = ConcatenatingAudioSource(children: list);
+    await _audioPlayer.setAudioSource(_playlist);
   }
 }

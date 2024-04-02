@@ -14,22 +14,22 @@ class AddRemoveSongButtons extends StatelessWidget {
     return Column(
       children: [
         Text(playerManager.currentSongTitle),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 20.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              FloatingActionButton(
-                onPressed: playerManager.addSong,
-                child: Icon(Icons.favorite),
-              ),
-              FloatingActionButton(
-                onPressed: playerManager.removeSong,
-                child: Icon(Icons.delete),
-              ),
-            ],
-          ),
-        ),
+        // Padding(
+        //   padding: const EdgeInsets.only(bottom: 20.0),
+        //   child: Row(
+        //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        //     children: [
+        //       FloatingActionButton(
+        //         onPressed: playerManager.addSong,
+        //         child: Icon(Icons.favorite),
+        //       ),
+        //       FloatingActionButton(
+        //         onPressed: playerManager.removeSong,
+        //         child: Icon(Icons.delete),
+        //       ),
+        //     ],
+        //   ),
+        // ),
       ],
     );
   }

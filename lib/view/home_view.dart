@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_filip/view/home_play_list.dart';
 import 'package:flutter_filip/view/home_player.dart';
-import 'package:flutter_filip/view/home_top_box.dart';
+import 'package:flutter_filip/view/home_intro_box.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
@@ -57,6 +58,7 @@ class HomeView extends StatelessWidget {
                 height: 20,
               ),
               HomeIntroBox(),
+              HomePlayList(),
               // 使用 spacer 进行占位，贴紧页面底部
               Spacer(),
               AddRemoveSongButtons(),

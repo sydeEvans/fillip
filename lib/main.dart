@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_filip/provider/player_manager.dart';
+import 'package:flutter_filip/provider/playlist_provider.dart';
 import 'package:flutter_filip/res/app_colors.dart';
 import 'package:flutter_filip/service/music_client.dart';
 import 'package:flutter_filip/view/home_view.dart';
@@ -10,7 +11,8 @@ void main() {
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(
-          create: (context) => PlayerManager(musicClient: musicClient))
+          create: (context) => PlayerManager(musicClient: musicClient)),
+      ChangeNotifierProvider(create: (_) => PlaylistProvider(musicClient: musicClient))
     ],
     child: MyApp(),
   ));
