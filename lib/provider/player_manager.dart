@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_filip/service/music_client.dart';
 import 'package:just_audio/just_audio.dart';
 
 import 'notifiers/play_button_notifier.dart';
 import 'notifiers/progress_notifier.dart';
 import 'notifiers/repeat_button_notifier.dart';
 
-class PlayerManager extends ChangeNotifier{
+class PlayerManager extends ChangeNotifier {
   final currentSongTitleNotifier = ValueNotifier<String>('');
   final playlistNotifier = ValueNotifier<List<String>>([]);
   final progressNotifier = ProgressNotifier();
@@ -18,7 +19,9 @@ class PlayerManager extends ChangeNotifier{
   late AudioPlayer _audioPlayer;
   late ConcatenatingAudioSource _playlist;
 
-  PlayerManager() {
+  late final MusicClient musicClient;
+
+  PlayerManager({required this.musicClient}) {
     _init();
   }
 
@@ -33,15 +36,12 @@ class PlayerManager extends ChangeNotifier{
   }
 
   void _setInitialPlaylist() async {
-    const prefix = 'https://www.soundhelix.com/examples/mp3';
-    final song1 = Uri.parse('$prefix/SoundHelix-Song-1.mp3');
-    final song2 = Uri.parse('$prefix/SoundHelix-Song-2.mp3');
-    final song3 = Uri.parse('$prefix/SoundHelix-Song-3.mp3');
-    _playlist = ConcatenatingAudioSource(children: [
-      AudioSource.uri(song1, tag: 'Song 1'),
-      AudioSource.uri(song2, tag: 'Song 2'),
-      AudioSource.uri(song3, tag: 'Song 3'),
-    ]);
+    List<Music> resp = await musicClient.fetchMusicList(num: 10);
+    var list = resp.map((e) {
+      return AudioSource.uri(Uri.parse(e.url), tag: e.basename);
+    }).toList();
+
+    _playlist = ConcatenatingAudioSource(children: list);
     await _audioPlayer.setAudioSource(_playlist);
   }
 

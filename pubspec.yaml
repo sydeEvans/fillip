@@ -18,6 +18,7 @@ dependencies:
   just_audio:
   animations:
   audio_video_progress_bar:
+  http:
 
 dev_dependencies:
   flutter_test:
