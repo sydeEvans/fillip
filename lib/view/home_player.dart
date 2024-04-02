@@ -3,7 +3,9 @@ import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter_filip/provider/notifiers/play_button_state.dart';
 import 'package:flutter_filip/provider/notifiers/repeat_state.dart';
 import 'package:flutter_filip/provider/player_manager.dart';
+import 'package:flutter_filip/res/app_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/svg.dart';
 
 class AddRemoveSongButtons extends StatelessWidget {
   const AddRemoveSongButtons({Key? key}) : super(key: key);
@@ -72,7 +74,7 @@ class AudioControlButtons extends StatelessWidget {
             NextSongButton(
               playerManager: playerManager,
             ),
-            ShuffleButton(
+            PlayListButton(
               playerManager: playerManager,
             ),
           ],
@@ -93,15 +95,14 @@ class RepeatButton extends StatelessWidget {
   Widget build(context) {
     late Icon icon;
     switch (playerManager.repeatState) {
-      case RepeatState.off:
-        icon = Icon(Icons.repeat, color: Colors.grey);
-        break;
       case RepeatState.repeatSong:
         icon = Icon(Icons.repeat_one);
         break;
       case RepeatState.repeatPlaylist:
         icon = Icon(Icons.repeat);
         break;
+      case RepeatState.shuffle:
+        icon = Icon(Icons.shuffle);
     }
     return IconButton(
       icon: icon,
@@ -179,8 +180,10 @@ class NextSongButton extends StatelessWidget {
   }
 }
 
-class ShuffleButton extends StatelessWidget {
-  const ShuffleButton({
+final _sheetController = ScrollController();
+
+class PlayListButton extends StatelessWidget {
+  const PlayListButton({
     required this.playerManager,
   });
 
@@ -188,11 +191,70 @@ class ShuffleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: (playerManager.isShuffleModeEnabled)
-          ? Icon(Icons.shuffle)
-          : Icon(Icons.shuffle, color: Colors.grey),
-      onPressed: playerManager.onShuffleButtonPressed,
+    return GestureDetector(
+      onTap: () {
+        showBottomSheetDialog(context);
+      },
+      child: SvgPicture.asset(
+        AppSvg.drawer,
+        height: 20,
+      ),
+    );
+  }
+
+
+  void showBottomSheetDialog(BuildContext context) {
+
+    double screenHeight = MediaQuery.of(context).size.height; // 获取屏幕高度
+    double desiredHeightPercentage = 0.7; // 你希望弹窗高度占屏幕高度的百分比，例如90%
+
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (BuildContext bc) {
+          return Container(
+            height: screenHeight * desiredHeightPercentage,
+            color: Colors.white,
+            child: SafeArea(
+              child: Column(
+                children: <Widget>[
+                  Container(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      '当前播放列表',
+                      style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: ListView.separated(
+                        shrinkWrap: true, // 重要！必须配合使用
+                        physics: NeverScrollableScrollPhysics(), // 禁止ListView本身的滚动
+                        itemCount: playerManager.currentSongList.length,
+                        itemBuilder: (context, index) {
+                          // 这里构建你的列表项
+                          return ListTile(
+                            dense: true,
+                            title: Text(playerManager.currentSongList[index].title),
+                          );
+                        },
+                        separatorBuilder: (BuildContext context, int index) {
+                          // 这里构建你的分割线
+                          return Divider(
+                            height: 1,
+                            thickness: 1, // 分割线粗细
+                            indent: 16, // 分割线左侧缩进
+                            endIndent: 16, // 分割线右侧缩进
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
     );
   }
 }

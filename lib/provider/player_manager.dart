@@ -9,6 +9,8 @@ import 'notifiers/repeat_state.dart';
 
 class PlayerManager extends ChangeNotifier {
   var currentSongTitle = '';
+  List<MediaItem> currentSongList = [];
+
   ProgressBarState progressBarState = ProgressBarState(
     current: Duration.zero,
     buffered: Duration.zero,
@@ -133,7 +135,8 @@ class PlayerManager extends ChangeNotifier {
 
       // update playlist
       final playlist = sequenceState.effectiveSequence;
-      // final titles = playlist.map((item) => item.tag as String).toList();
+
+      currentSongList = playlist.map((item) => item.tag as MediaItem).toList();
 
       // update shuffle mode
       isShuffleModeEnabled = sequenceState.shuffleModeEnabled;
@@ -167,19 +170,25 @@ class PlayerManager extends ChangeNotifier {
     _audioPlayer.dispose();
   }
 
-  void onRepeatButtonPressed() {
+  void onRepeatButtonPressed() async {
     // 计算得到枚举的下一个
     repeatState = RepeatState.values[(repeatState.index + 1) % RepeatState.values.length];
 
     switch (repeatState) {
-      case RepeatState.off:
-        _audioPlayer.setLoopMode(LoopMode.off);
-        break;
       case RepeatState.repeatSong:
         _audioPlayer.setLoopMode(LoopMode.one);
         break;
       case RepeatState.repeatPlaylist:
         _audioPlayer.setLoopMode(LoopMode.all);
+        break;
+      case RepeatState.shuffle:
+        final enable = !_audioPlayer.shuffleModeEnabled;
+        print(enable);
+        if (enable) {
+          await _audioPlayer.shuffle();
+        }
+        await _audioPlayer.setShuffleModeEnabled(enable);
+        break;
     }
   }
 
@@ -189,14 +198,6 @@ class PlayerManager extends ChangeNotifier {
 
   void onNextSongButtonPressed() {
     _audioPlayer.seekToNext();
-  }
-
-  void onShuffleButtonPressed() async {
-    final enable = !_audioPlayer.shuffleModeEnabled;
-    if (enable) {
-      await _audioPlayer.shuffle();
-    }
-    await _audioPlayer.setShuffleModeEnabled(enable);
   }
 
   void addSong() {
