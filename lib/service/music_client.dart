@@ -65,7 +65,7 @@ class Playlist {
 
 class MusicClient {
   final String apiUrl = "https://alist-music.deno.dev/api/audio";
-  final int maxRetries = 3; // 可以定义一个合适的最大重试次数
+  final int maxRetries = 10; // 可以定义一个合适的最大重试次数
 
   // 请求获取音乐列表，增加了重试逻辑
   Future<List<Music>> fetchMusicList({int? num}) async {

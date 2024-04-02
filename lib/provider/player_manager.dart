@@ -2,22 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_filip/service/music_client.dart';
 import 'package:just_audio/just_audio.dart';
 
-import 'notifiers/play_button_notifier.dart';
-import 'notifiers/progress_notifier.dart';
-import 'notifiers/repeat_button_notifier.dart';
+import 'notifiers/play_button_state.dart';
+import 'notifiers/progress_bar_state.dart';
+import 'notifiers/repeat_state.dart';
 
 class PlayerManager extends ChangeNotifier {
-  final currentSongTitleNotifier = ValueNotifier<String>('');
-  final playlistNotifier = ValueNotifier<List<String>>([]);
-  final progressNotifier = ProgressNotifier();
-  final repeatButtonNotifier = RepeatButtonNotifier();
-  final isFirstSongNotifier = ValueNotifier<bool>(true);
-  final playButtonNotifier = PlayButtonNotifier();
-  final isLastSongNotifier = ValueNotifier<bool>(true);
-  final isShuffleModeEnabledNotifier = ValueNotifier<bool>(false);
+  var currentSongTitle = '';
+  List<String> playList = [];
+  ProgressBarState progressBarState = ProgressBarState(
+    current: Duration.zero,
+    buffered: Duration.zero,
+    total: Duration.zero,
+  );
+  RepeatState repeatState = RepeatState.off;
 
-  late AudioPlayer _audioPlayer;
-  late ConcatenatingAudioSource _playlist;
+  var isFirstSong = true;
+  var isLastSong = true;
+  var isShuffleModeEnabled = false;
+  ButtonState playButtonState = ButtonState.paused;
+
+  late final AudioPlayer _audioPlayer;
+  late final ConcatenatingAudioSource _playlist;
 
   late final MusicClient musicClient;
 
@@ -51,11 +56,11 @@ class PlayerManager extends ChangeNotifier {
       final processingState = playerState.processingState;
       if (processingState == ProcessingState.loading ||
           processingState == ProcessingState.buffering) {
-        playButtonNotifier.value = ButtonState.loading;
+        playButtonState = ButtonState.loading;
       } else if (!isPlaying) {
-        playButtonNotifier.value = ButtonState.paused;
+        playButtonState = ButtonState.paused;
       } else if (processingState != ProcessingState.completed) {
-        playButtonNotifier.value = ButtonState.playing;
+        playButtonState = ButtonState.playing;
       } else {
         _audioPlayer.seek(Duration.zero);
         _audioPlayer.pause();
@@ -65,34 +70,41 @@ class PlayerManager extends ChangeNotifier {
 
   void _listenForChangesInPlayerPosition() {
     _audioPlayer.positionStream.listen((position) {
-      final oldState = progressNotifier.value;
-      progressNotifier.value = ProgressBarState(
+      final oldState = progressBarState;
+      progressBarState = ProgressBarState(
         current: position,
         buffered: oldState.buffered,
         total: oldState.total,
       );
+
+      notifyListeners();
     });
   }
 
   void _listenForChangesInBufferedPosition() {
     _audioPlayer.bufferedPositionStream.listen((bufferedPosition) {
-      final oldState = progressNotifier.value;
-      progressNotifier.value = ProgressBarState(
+      final oldState = progressBarState;
+      progressBarState = ProgressBarState(
         current: oldState.current,
         buffered: bufferedPosition,
         total: oldState.total,
       );
+
+      notifyListeners();
+
     });
   }
 
   void _listenForChangesInTotalDuration() {
     _audioPlayer.durationStream.listen((totalDuration) {
-      final oldState = progressNotifier.value;
-      progressNotifier.value = ProgressBarState(
+      final oldState = progressBarState;
+      progressBarState = ProgressBarState(
         current: oldState.current,
         buffered: oldState.buffered,
         total: totalDuration ?? Duration.zero,
       );
+
+      notifyListeners();
     });
   }
 
@@ -103,24 +115,26 @@ class PlayerManager extends ChangeNotifier {
       // update current song title
       final currentItem = sequenceState.currentSource;
       final title = currentItem?.tag as String?;
-      currentSongTitleNotifier.value = title ?? '';
+      currentSongTitle = title ?? '';
 
       // update playlist
       final playlist = sequenceState.effectiveSequence;
       final titles = playlist.map((item) => item.tag as String).toList();
-      playlistNotifier.value = titles;
+      playList = titles;
 
       // update shuffle mode
-      isShuffleModeEnabledNotifier.value = sequenceState.shuffleModeEnabled;
+      isShuffleModeEnabled = sequenceState.shuffleModeEnabled;
 
       // update previous and next buttons
       if (playlist.isEmpty || currentItem == null) {
-        isFirstSongNotifier.value = true;
-        isLastSongNotifier.value = true;
+        isFirstSong = true;
+        isLastSong = true;
       } else {
-        isFirstSongNotifier.value = playlist.first == currentItem;
-        isLastSongNotifier.value = playlist.last == currentItem;
+        isFirstSong = playlist.first == currentItem;
+        isLastSong = playlist.last == currentItem;
       }
+
+      notifyListeners();
     });
   }
 
@@ -141,8 +155,10 @@ class PlayerManager extends ChangeNotifier {
   }
 
   void onRepeatButtonPressed() {
-    repeatButtonNotifier.nextState();
-    switch (repeatButtonNotifier.value) {
+    // 计算得到枚举的下一个
+    repeatState = RepeatState.values[(repeatState.index + 1) % RepeatState.values.length];
+
+    switch (repeatState) {
       case RepeatState.off:
         _audioPlayer.setLoopMode(LoopMode.off);
         break;
