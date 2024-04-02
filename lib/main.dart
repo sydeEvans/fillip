@@ -20,7 +20,7 @@ void setBackground() async {
 }
 
 void main() {
-  // setBackground();
+  setBackground();
   final musicClient = MusicClient();
   runApp(MultiProvider(
     providers: [
