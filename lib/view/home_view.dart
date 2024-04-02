@@ -45,7 +45,7 @@ class HomeView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '标题',
+          'Alist Music',
         ),
       ),
       body: Semantics(
@@ -68,9 +68,9 @@ class HomeView extends StatelessWidget {
           ),
         ),
       ),
-      drawer: Drawer(
-        child: drawerItems,
-      ),
+      // drawer: Drawer(
+      //   child: drawerItems,
+      // ),
     );
   }
 }

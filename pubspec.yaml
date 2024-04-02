@@ -16,6 +16,7 @@ dependencies:
   provider: ^6.0.0
   flutter_svg:
   just_audio:
+  just_audio_background: any # substitute version number
   animations:
   audio_video_progress_bar:
   http:

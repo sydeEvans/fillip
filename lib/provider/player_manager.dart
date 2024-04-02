@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_filip/service/music_client.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
 import 'notifiers/play_button_state.dart';
 import 'notifiers/progress_bar_state.dart';
@@ -8,7 +9,6 @@ import 'notifiers/repeat_state.dart';
 
 class PlayerManager extends ChangeNotifier {
   var currentSongTitle = '';
-  List<String> playList = [];
   ProgressBarState progressBarState = ProgressBarState(
     current: Duration.zero,
     buffered: Duration.zero,
@@ -40,14 +40,29 @@ class PlayerManager extends ChangeNotifier {
     _listenForChangesInSequenceState();
   }
 
-  void _setInitialPlaylist() async {
-    List<Music> resp = await musicClient.fetchMusicList(num: 10);
+  _resetPlaylist(List<Music> resp) async {
     var list = resp.map((e) {
-      return AudioSource.uri(Uri.parse(e.url), tag: e.basename);
+      return AudioSource.uri(Uri.parse(e.url), tag: MediaItem(
+          id: e.url,
+          title: e.basename,
+          album: e.filename,
+          artUri: Uri.parse('https://res.cloudinary.com/dp3ppkxo5/image/upload/v1693776174/spotify-astro/playlist_1_yci5uf.jpg'),
+      ));
     }).toList();
 
     _playlist = ConcatenatingAudioSource(children: list);
     await _audioPlayer.setAudioSource(_playlist);
+  }
+
+  void _setInitialPlaylist() async {
+    List<Music> resp = await musicClient.fetchMusicList(num: 10);
+    _resetPlaylist(resp);
+  }
+
+  void replacePlaylist({ key = String }) async {
+    var resp = await musicClient.searchMusic(key);
+
+    _resetPlaylist(resp);
   }
 
   void _listenForChangesInPlayerState() {
@@ -113,13 +128,12 @@ class PlayerManager extends ChangeNotifier {
 
       // update current song title
       final currentItem = sequenceState.currentSource;
-      final title = currentItem?.tag as String?;
-      currentSongTitle = title ?? '';
+      final title = currentItem?.tag as MediaItem;
+      currentSongTitle = title.title ?? '';
 
       // update playlist
       final playlist = sequenceState.effectiveSequence;
-      final titles = playlist.map((item) => item.tag as String).toList();
-      playList = titles;
+      // final titles = playlist.map((item) => item.tag as String).toList();
 
       // update shuffle mode
       isShuffleModeEnabled = sequenceState.shuffleModeEnabled;
@@ -196,17 +210,5 @@ class PlayerManager extends ChangeNotifier {
     final index = _playlist.length - 1;
     if (index < 0) return;
     _playlist.removeAt(index);
-  }
-
-  void replacePlaylist({ key = String }) async {
-    var resp = await musicClient.searchMusic(key);
-
-
-    var list = resp.map((e) {
-      return AudioSource.uri(Uri.parse(e.url), tag: e.basename);
-    }).toList();
-
-    _playlist = ConcatenatingAudioSource(children: list);
-    await _audioPlayer.setAudioSource(_playlist);
   }
 }
