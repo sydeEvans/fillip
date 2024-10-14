@@ -126,7 +126,8 @@ class MusicClient {
       return data
           .map<Music>((json) => Music.fromJson(json))
           .map((e) {
-            e.url = 'http://evans.x3322.net:6788/d${e.filename}';
+            String encodedFilename = Uri.encodeComponent(e.filename);
+            e.url = 'https://alist-music.deno.dev/music?path=${encodedFilename}';
             return e;
           })
           .toList();
